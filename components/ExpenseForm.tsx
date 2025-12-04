@@ -171,9 +171,9 @@ export default function ExpenseForm({ onSubmit, initialData, onCancel }: Expense
       {/* Category & Subcategory - Side by side */}
       <div className="grid grid-cols-2 gap-2 sm:gap-3">
         <div>
-          <label className="text-[10px] sm:text-xs font-medium text-muted-foreground uppercase tracking-wide">Category</label>
+          <label className="text-[10px] sm:text-xs font-medium text-muted-foreground uppercase tracking-wide mb-1.5 block">Category</label>
           <select
-            className="w-full mt-1 rounded-lg border bg-background px-2 sm:px-3 py-2 text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none"
+            className="select-styled"
             value={formData.category}
             onChange={(e) => setFormData({ ...formData, category: e.target.value as ExpenseCategory })}
           >
@@ -183,9 +183,9 @@ export default function ExpenseForm({ onSubmit, initialData, onCancel }: Expense
           </select>
         </div>
         <div>
-          <label className="text-[10px] sm:text-xs font-medium text-muted-foreground uppercase tracking-wide">Subcategory</label>
+          <label className="text-[10px] sm:text-xs font-medium text-muted-foreground uppercase tracking-wide mb-1.5 block">Subcategory</label>
           <select
-            className="w-full mt-1 rounded-lg border bg-background px-2 sm:px-3 py-2 text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none"
+            className="select-styled"
             value={formData.subcategory}
             onChange={(e) => setFormData({ ...formData, subcategory: e.target.value })}
           >
