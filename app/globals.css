@@ -111,4 +111,9 @@
   .scrollbar-hide::-webkit-scrollbar {
     display: none;
   }
+
+  /* Safe area padding for notched phones */
+  .pb-safe {
+    padding-bottom: max(1.5rem, env(safe-area-inset-bottom));
+  }
 }
