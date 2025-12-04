@@ -1,11 +1,11 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import Image from 'next/image';
 import { ExpenseCategory, ExpenseFormData, Expense, CATEGORY_SUBCATEGORIES, EXPENSE_CATEGORIES } from '@/types/expense';
 import { calculateMonthlyCost, formatCurrency, generateAvatarUrl, generateId } from '@/lib/utils';
 import { categorizeExpense } from '@/app/actions/categorize';
-import { Sparkles, Loader2, Info } from 'lucide-react';
+import { Sparkles, Loader2, ChevronDown, ChevronUp, Palette, Calculator } from 'lucide-react';
 
 const FALLBACK_PRIMARY_COLOR = '#2563EB';
 const FALLBACK_ACCENT_COLOR = '#7C3AED';
@@ -31,24 +31,28 @@ export default function ExpenseForm({ onSubmit, initialData, onCancel }: Expense
     notes: initialData?.notes || '',
   });
 
+  const [isAiLoading, setIsAiLoading] = useState(false);
+  const [aiSuggestion, setAiSuggestion] = useState<string>('');
+  const [showAdvanced, setShowAdvanced] = useState(false);
+  const nameInputRef = useRef<HTMLInputElement>(null);
+
+  // Focus name input on mount
+  useEffect(() => {
+    if (!initialData) {
+      nameInputRef.current?.focus();
+    }
+  }, [initialData]);
+
   // Update subcategory when category changes
   useEffect(() => {
     const subcategories = CATEGORY_SUBCATEGORIES[formData.category];
-    // If current subcategory is not valid for the new category, reset to first option
     if (formData.subcategory && !subcategories.includes(formData.subcategory)) {
       setFormData(prev => ({ ...prev, subcategory: subcategories[0] || '' }));
     }
   }, [formData.category, formData.subcategory]);
 
-  const [isAiLoading, setIsAiLoading] = useState(false);
-  const [aiSuggestion, setAiSuggestion] = useState<string>('');
-
   const handleAiCategorize = async () => {
-    if (!formData.name.trim()) {
-      setAiSuggestion('Please enter an item name first');
-      setTimeout(() => setAiSuggestion(''), 3000);
-      return;
-    }
+    if (!formData.name.trim()) return;
 
     setIsAiLoading(true);
     setAiSuggestion('');
@@ -66,7 +70,6 @@ export default function ExpenseForm({ onSubmit, initialData, onCancel }: Expense
             ? result.suggestedSubcategory
             : subcategories[0] || '';
 
-        // Update form with AI suggestions
         setFormData(prev => {
           const fallbackAvatar = generateAvatarUrl(result.cleanedName, nextCategory);
           const inferredLogo =
@@ -84,23 +87,13 @@ export default function ExpenseForm({ onSubmit, initialData, onCancel }: Expense
             imageUrl: inferredImage,
           };
         });
-
-        const subcatMsg = nextSubcategory ? ` > ${nextSubcategory}` : '';
-        const brandingBits: string[] = [];
-        if (result.brandLogoUrl || result.imageUrl) brandingBits.push('logo');
-        if (result.brandColor || result.brandAccentColor) brandingBits.push('colors');
-        const brandingMsg = brandingBits.length ? ` + ${brandingBits.join(' & ')}` : '';
-
-        setAiSuggestion(
-          `AI suggested: "${result.cleanedName}" in ${nextCategory}${subcatMsg}${brandingMsg} (${result.confidence} confidence)`
-        );
+        setAiSuggestion('Auto-categorized!');
       }
     } catch (error) {
-      setAiSuggestion('Failed to categorize. Please try again.');
+      // Silent fail
     } finally {
       setIsAiLoading(false);
-      // Clear suggestion after 5 seconds
-      setTimeout(() => setAiSuggestion(''), 5000);
+      setTimeout(() => setAiSuggestion(''), 3000);
     }
   };
 
@@ -109,11 +102,9 @@ export default function ExpenseForm({ onSubmit, initialData, onCancel }: Expense
 
     const monthlyCost = calculateMonthlyCost(formData.totalCost, formData.usageMonths);
     const now = new Date().toISOString();
-    const trimmedLogo = formData.brandLogoUrl?.trim();
-    const trimmedImage = formData.imageUrl?.trim();
     const fallbackAvatar = generateAvatarUrl(formData.name || 'Expense', formData.category);
-    const normalizedLogo = trimmedLogo || trimmedImage || fallbackAvatar;
-    const normalizedImage = trimmedImage || trimmedLogo || fallbackAvatar;
+    const normalizedLogo = formData.brandLogoUrl?.trim() || formData.imageUrl?.trim() || fallbackAvatar;
+    const normalizedImage = formData.imageUrl?.trim() || formData.brandLogoUrl?.trim() || fallbackAvatar;
 
     const expense: Expense = {
       id: initialData?.id || generateId(),
@@ -128,23 +119,6 @@ export default function ExpenseForm({ onSubmit, initialData, onCancel }: Expense
     };
 
     onSubmit(expense);
-
-    // Reset form if creating new expense
-    if (!initialData) {
-      setFormData({
-        name: '',
-        category: 'Technology & Electronics',
-        subcategory: '',
-        totalCost: 0,
-        usageMonths: 12,
-        brandColor: undefined,
-        brandAccentColor: undefined,
-        brandLogoUrl: '',
-        imageUrl: '',
-        purchaseDate: new Date().toISOString().split('T')[0],
-        notes: '',
-      });
-    }
   };
 
   const monthlyCost = calculateMonthlyCost(formData.totalCost, formData.usageMonths);
@@ -152,218 +126,237 @@ export default function ExpenseForm({ onSubmit, initialData, onCancel }: Expense
   const brandAccent = formData.brandAccentColor || FALLBACK_ACCENT_COLOR;
   const hasBrandSelections = Boolean(formData.brandColor || formData.brandAccentColor);
   const brandingGradientStyle = hasBrandSelections
-    ? {
-      backgroundImage: `linear-gradient(135deg, ${brandPrimary}, ${brandAccent})`,
-    }
+    ? { backgroundImage: `linear-gradient(135deg, ${brandPrimary}, ${brandAccent})` }
     : undefined;
-  const avatarFallback = generateAvatarUrl(formData.name || 'Expense', formData.category);
-  const logoPreview = formData.brandLogoUrl?.trim() || formData.imageUrl?.trim() || avatarFallback;
-  const brandNameForAlt = formData.name || 'Brand';
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-6">
-      {/* Name & AI */}
-      <div className="space-y-2">
-        <label className="label">Item Name</label>
-        <div className="flex gap-2">
-          <div className="relative flex-1">
-            <input
-              type="text"
-              className="input-field pr-10"
-              placeholder="e.g., MacBook Pro"
-              value={formData.name}
-              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-              required
-            />
-          </div>
-          <button
-            type="button"
-            onClick={handleAiCategorize}
-            disabled={isAiLoading || !formData.name.trim()}
-            className="btn-primary px-4"
-            title="Auto-categorize with AI"
-          >
+    <form onSubmit={handleSubmit} className="space-y-8">
+      {/* Hero Input Section */}
+      <div className="space-y-4">
+        <div className="relative group">
+          <input
+            ref={nameInputRef}
+            type="text"
+            className="w-full text-3xl font-bold bg-transparent border-b-2 border-gray-200 dark:border-gray-700 py-2 px-0 focus:outline-none focus:border-primary transition-colors placeholder:text-gray-300 dark:placeholder:text-gray-600"
+            placeholder="What did you buy?"
+            value={formData.name}
+            onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+            onBlur={() => !initialData && handleAiCategorize()}
+            required
+          />
+          <div className="absolute right-0 top-1/2 -translate-y-1/2 flex items-center gap-2">
             {isAiLoading ? (
-              <Loader2 className="h-4 w-4 animate-spin" />
+              <div className="flex items-center gap-2 text-primary text-sm font-medium animate-pulse">
+                <Loader2 className="h-4 w-4 animate-spin" />
+                <span>Magic...</span>
+              </div>
+            ) : aiSuggestion ? (
+              <span className="text-sm text-emerald-500 font-medium animate-fade-in">
+                {aiSuggestion}
+              </span>
             ) : (
-              <Sparkles className="h-4 w-4" />
+              <button
+                type="button"
+                onClick={handleAiCategorize}
+                disabled={!formData.name.trim()}
+                className="p-2 text-gray-400 hover:text-primary transition-colors opacity-0 group-hover:opacity-100 focus:opacity-100"
+                title="Auto-categorize"
+              >
+                <Sparkles className="h-5 w-5" />
+              </button>
             )}
-            <span className="sr-only sm:not-sr-only sm:ml-2">Smart Fill</span>
-          </button>
-        </div>
-        {aiSuggestion && (
-          <p className={`text-xs ${aiSuggestion.startsWith('Error') ? 'text-destructive' : 'text-emerald-600 dark:text-emerald-400'
-            }`}>
-            {aiSuggestion}
-          </p>
-        )}
-      </div>
-
-      <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
-        {/* Category */}
-        <div className="space-y-2">
-          <label className="label">Category</label>
-          <select
-            className="input-field"
-            value={formData.category}
-            onChange={(e) => setFormData({ ...formData, category: e.target.value as ExpenseCategory })}
-            required
-          >
-            {EXPENSE_CATEGORIES.map(category => (
-              <option key={category} value={category}>{category}</option>
-            ))}
-          </select>
-        </div>
-
-        {/* Subcategory */}
-        <div className="space-y-2">
-          <label className="label">Subcategory</label>
-          <select
-            className="input-field"
-            value={formData.subcategory}
-            onChange={(e) => setFormData({ ...formData, subcategory: e.target.value })}
-          >
-            {CATEGORY_SUBCATEGORIES[formData.category].map(subcategory => (
-              <option key={subcategory} value={subcategory}>{subcategory}</option>
-            ))}
-          </select>
-        </div>
-
-        {/* Cost */}
-        <div className="space-y-2">
-          <label className="label">Total Cost (₹)</label>
-          <input
-            type="number"
-            className="input-field"
-            placeholder="0"
-            min="0"
-            step="0.01"
-            value={formData.totalCost || ''}
-            onChange={(e) => setFormData({ ...formData, totalCost: parseFloat(e.target.value) || 0 })}
-            required
-          />
-        </div>
-
-        {/* Usage */}
-        <div className="space-y-2">
-          <div className="flex items-center justify-between">
-            <label className="label mb-0">Usage Period</label>
-            <span className="text-xs text-muted-foreground">{formData.usageMonths} months</span>
           </div>
-          <input
-            type="range"
-            min="1"
-            max="60"
-            className="w-full accent-primary"
-            value={formData.usageMonths}
-            onChange={(e) => setFormData({ ...formData, usageMonths: parseInt(e.target.value) || 1 })}
-          />
-          <div className="flex justify-between text-xs text-muted-foreground">
-            <span>1 mo</span>
-            <span>5 years</span>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div className="space-y-1.5">
+            <label className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Category</label>
+            <select
+              className="w-full rounded-lg border bg-background px-3 py-2 text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all"
+              value={formData.category}
+              onChange={(e) => setFormData({ ...formData, category: e.target.value as ExpenseCategory })}
+            >
+              {EXPENSE_CATEGORIES.map(category => (
+                <option key={category} value={category}>{category}</option>
+              ))}
+            </select>
+          </div>
+          <div className="space-y-1.5">
+            <label className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Subcategory</label>
+            <select
+              className="w-full rounded-lg border bg-background px-3 py-2 text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all"
+              value={formData.subcategory}
+              onChange={(e) => setFormData({ ...formData, subcategory: e.target.value })}
+            >
+              {CATEGORY_SUBCATEGORIES[formData.category].map(subcategory => (
+                <option key={subcategory} value={subcategory}>{subcategory}</option>
+              ))}
+            </select>
           </div>
         </div>
       </div>
 
-      {/* Brand Identity */}
-      <div className="rounded-xl border bg-card p-4">
-        <div className="flex items-center justify-between mb-4">
-          <h4 className="text-sm font-medium text-foreground">Brand Identity</h4>
-          <div className="flex items-center gap-2">
-            <div
-              className={`h-8 w-16 rounded-md border shadow-sm ${hasBrandSelections ? '' : 'bg-muted'
-                }`}
-              style={brandingGradientStyle}
-            />
-            <div className="h-8 w-8 overflow-hidden rounded-md border bg-background flex items-center justify-center">
-              {logoPreview ? (
-                <Image
-                  src={logoPreview}
-                  alt="Brand logo"
-                  width={32}
-                  height={32}
-                  className="h-full w-full object-contain"
-                  unoptimized
+      {/* Calculator Section */}
+      <div className="bg-gray-50 dark:bg-gray-800/50 rounded-xl p-6 space-y-6">
+        <div className="flex items-center gap-2 text-primary font-medium">
+          <Calculator className="h-4 w-4" />
+          <span>Cost Calculator</span>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-8">
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-foreground">Total Cost</label>
+              <div className="relative">
+                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">₹</span>
+                <input
+                  type="number"
+                  className="w-full pl-8 pr-4 py-2 rounded-lg border bg-background focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all font-mono"
+                  placeholder="0"
+                  min="0"
+                  step="0.01"
+                  value={formData.totalCost || ''}
+                  onChange={(e) => setFormData({ ...formData, totalCost: parseFloat(e.target.value) || 0 })}
+                  required
                 />
-              ) : (
-                <span className="text-xs font-bold text-muted-foreground">?</span>
-              )}
+              </div>
             </div>
-          </div>
-        </div>
 
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-          <div className="space-y-1">
-            <label className="text-xs text-muted-foreground">Primary Color</label>
-            <div className="flex items-center gap-2">
+            <div className="space-y-2">
+              <div className="flex justify-between">
+                <label className="text-sm font-medium text-foreground">Usage Period</label>
+                <span className="text-sm font-medium text-primary">{formData.usageMonths} months</span>
+              </div>
               <input
-                type="color"
-                className="h-8 w-8 cursor-pointer rounded border-0 p-0"
-                value={brandPrimary}
-                onChange={(e) => setFormData(prev => ({ ...prev, brandColor: e.target.value }))}
+                type="range"
+                min="1"
+                max="60"
+                className="w-full accent-primary h-2 bg-gray-200 dark:bg-gray-700 rounded-lg appearance-none cursor-pointer"
+                value={formData.usageMonths}
+                onChange={(e) => setFormData({ ...formData, usageMonths: parseInt(e.target.value) || 1 })}
               />
-              <span className="text-xs font-mono text-muted-foreground">{formData.brandColor || 'None'}</span>
+              <div className="flex justify-between text-xs text-muted-foreground">
+                <span>1 mo</span>
+                <span>5 years</span>
+              </div>
             </div>
           </div>
 
-          <div className="space-y-1">
-            <label className="text-xs text-muted-foreground">Accent Color</label>
-            <div className="flex items-center gap-2">
-              <input
-                type="color"
-                className="h-8 w-8 cursor-pointer rounded border-0 p-0"
-                value={brandAccent}
-                onChange={(e) => setFormData(prev => ({ ...prev, brandAccentColor: e.target.value }))}
-              />
-              <span className="text-xs font-mono text-muted-foreground">{formData.brandAccentColor || 'None'}</span>
+          <div className="flex items-center justify-center">
+            <div className="text-center space-y-1 p-6 rounded-2xl bg-white dark:bg-gray-900 shadow-sm border border-gray-100 dark:border-gray-800 w-full">
+              <p className="text-sm text-muted-foreground">Monthly Impact</p>
+              <p className="text-3xl font-bold text-primary tracking-tight">
+                {formatCurrency(monthlyCost)}
+              </p>
+              <p className="text-xs text-muted-foreground">per month</p>
             </div>
-          </div>
-
-          <div className="space-y-1">
-            <label className="text-xs text-muted-foreground">Logo URL</label>
-            <input
-              type="url"
-              className="input-field h-8 text-xs"
-              placeholder="https://..."
-              value={formData.brandLogoUrl}
-              onChange={(e) => setFormData(prev => ({ ...prev, brandLogoUrl: e.target.value, imageUrl: e.target.value }))}
-            />
           </div>
         </div>
       </div>
 
-      {/* Notes */}
-      <div className="space-y-2">
-        <label className="label">Notes</label>
-        <textarea
-          className="input-field min-h-[80px] py-2"
-          placeholder="Add any additional details..."
-          value={formData.notes}
-          onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-        />
-      </div>
+      {/* Advanced Toggle */}
+      <div>
+        <button
+          type="button"
+          onClick={() => setShowAdvanced(!showAdvanced)}
+          className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
+        >
+          {showAdvanced ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+          <span>Advanced Customization</span>
+        </button>
 
-      {/* Summary */}
-      <div className="rounded-xl bg-primary/5 p-4 border border-primary/10">
-        <div className="flex items-center justify-between">
-          <div>
-            <p className="text-sm font-medium text-primary">Estimated Monthly Cost</p>
-            <p className="text-xs text-muted-foreground">Based on {formData.usageMonths} months usage</p>
+        {showAdvanced && (
+          <div className="mt-4 pt-4 border-t border-gray-100 dark:border-gray-800 animate-slide-up space-y-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+              <div className="space-y-4">
+                <div className="flex items-center gap-2 text-sm font-medium">
+                  <Palette className="h-4 w-4" />
+                  <span>Brand Colors</span>
+                </div>
+                <div className="flex gap-4">
+                  <div className="space-y-1.5">
+                    <label className="text-xs text-muted-foreground">Primary</label>
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="color"
+                        className="h-8 w-8 rounded cursor-pointer border-0 p-0"
+                        value={brandPrimary}
+                        onChange={(e) => setFormData(prev => ({ ...prev, brandColor: e.target.value }))}
+                      />
+                      <span className="text-xs font-mono text-muted-foreground">{formData.brandColor || 'Default'}</span>
+                    </div>
+                  </div>
+                  <div className="space-y-1.5">
+                    <label className="text-xs text-muted-foreground">Accent</label>
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="color"
+                        className="h-8 w-8 rounded cursor-pointer border-0 p-0"
+                        value={brandAccent}
+                        onChange={(e) => setFormData(prev => ({ ...prev, brandAccentColor: e.target.value }))}
+                      />
+                      <span className="text-xs font-mono text-muted-foreground">{formData.brandAccentColor || 'Default'}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="space-y-4">
+                <label className="text-sm font-medium">Logo URL</label>
+                <div className="flex gap-3">
+                  <input
+                    type="url"
+                    className="flex-1 rounded-lg border bg-background px-3 py-2 text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all"
+                    placeholder="https://..."
+                    value={formData.brandLogoUrl}
+                    onChange={(e) => setFormData(prev => ({ ...prev, brandLogoUrl: e.target.value, imageUrl: e.target.value }))}
+                  />
+                  <div className="h-10 w-10 rounded-lg border bg-muted/50 flex items-center justify-center overflow-hidden shrink-0">
+                    {formData.brandLogoUrl ? (
+                      <Image
+                        src={formData.brandLogoUrl}
+                        alt="Preview"
+                        width={24}
+                        height={24}
+                        className="h-full w-full object-contain"
+                        unoptimized
+                      />
+                    ) : (
+                      <span className="text-xs text-muted-foreground">?</span>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Notes</label>
+              <textarea
+                className="w-full rounded-lg border bg-background px-3 py-2 text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all min-h-[80px]"
+                placeholder="Add any additional details..."
+                value={formData.notes}
+                onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
+              />
+            </div>
           </div>
-          <p className="text-2xl font-bold text-primary">
-            {formatCurrency(monthlyCost)}
-          </p>
-        </div>
+        )}
       </div>
 
       {/* Actions */}
-      <div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
+      <div className="flex items-center justify-end gap-3 pt-4 border-t border-gray-100 dark:border-gray-800">
         {onCancel && (
-          <button type="button" onClick={onCancel} className="btn-secondary w-full sm:w-auto">
+          <button
+            type="button"
+            onClick={onCancel}
+            className="px-4 py-2 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
+          >
             Cancel
           </button>
         )}
-        <button type="submit" className="btn-primary w-full sm:w-auto">
+        <button
+          type="submit"
+          className="btn-primary px-6 py-2 shadow-lg shadow-primary/25 hover:shadow-primary/40 transition-all"
+        >
           {initialData ? 'Update Expense' : 'Add Expense'}
         </button>
       </div>

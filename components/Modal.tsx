@@ -43,50 +43,48 @@ export default function Modal({ open, title, description, onClose, children }: M
 
   return (
     <div
-      className="fixed inset-0 z-50 flex min-h-full items-start justify-center overflow-y-auto px-3 py-6 sm:items-center sm:px-6 sm:py-8"
+      className="fixed inset-0 z-50 flex min-h-full items-center justify-center overflow-y-auto p-4 sm:p-6"
       onClick={handleBackdropClick}
       role="dialog"
       aria-modal="true"
       aria-labelledby={title ? 'modal-title' : undefined}
       tabIndex={-1}
     >
+      {/* Backdrop */}
       <div
-        className="absolute inset-0 bg-slate-900/50 dark:bg-slate-950/70 backdrop-blur-sm animate-overlay-in"
+        className="fixed inset-0 bg-black/40 backdrop-blur-sm animate-overlay-in"
         onClick={onClose}
-      ></div>
+      />
 
-      <div className="relative w-full max-w-3xl md:max-w-4xl lg:max-w-5xl max-h-[calc(100vh-4rem)] animate-modal-in">
-        <div className="relative flex max-h-[calc(100vh-4rem)] flex-col overflow-hidden rounded-3xl bg-white dark:bg-gray-900 shadow-2xl ring-1 ring-black/5 dark:ring-white/10">
-          <div className="absolute inset-x-0 -top-32 h-64 bg-gradient-to-br from-indigo-500/15 via-blue-500/10 to-purple-500/25 blur-3xl"></div>
-
-          <div className="relative border-b border-gray-100/70 px-6 pt-6 pb-4 sm:px-8 sm:pt-8 dark:border-gray-800/80">
-            <div className="flex flex-wrap items-start justify-between gap-4">
-              {title && (
-                <div className="max-w-xl">
-                  <h2 id="modal-title" className="text-2xl font-semibold text-gray-900 dark:text-gray-100">
-                    {title}
-                  </h2>
-                  {description && (
-                    <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">
-                      {description}
-                    </p>
-                  )}
-                </div>
-              )}
-              <button
-                type="button"
-                onClick={onClose}
-                className="shrink-0 rounded-full bg-white/90 dark:bg-gray-800/70 p-2.5 text-gray-600 hover:text-gray-900 hover:shadow-md transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 dark:text-gray-300 dark:hover:text-white"
-                aria-label="Close"
-              >
-                <X className="h-5 w-5" />
-              </button>
-            </div>
+      {/* Modal Content */}
+      <div className="relative w-full max-w-2xl transform overflow-hidden rounded-2xl bg-white dark:bg-gray-900 shadow-2xl ring-1 ring-black/5 dark:ring-white/10 transition-all animate-modal-in">
+        {/* Header */}
+        <div className="flex items-center justify-between border-b border-gray-100 dark:border-gray-800 px-6 py-4">
+          <div>
+            {title && (
+              <h2 id="modal-title" className="text-lg font-semibold text-gray-900 dark:text-gray-100">
+                {title}
+              </h2>
+            )}
+            {description && (
+              <p className="text-sm text-gray-500 dark:text-gray-400">
+                {description}
+              </p>
+            )}
           </div>
+          <button
+            type="button"
+            onClick={onClose}
+            className="rounded-full p-2 text-gray-400 hover:bg-gray-100 hover:text-gray-500 dark:hover:bg-gray-800 dark:hover:text-gray-300 transition-colors focus:outline-none focus:ring-2 focus:ring-primary/20"
+            aria-label="Close"
+          >
+            <X className="h-5 w-5" />
+          </button>
+        </div>
 
-          <div className="relative flex-1 min-h-0 overflow-y-auto px-6 py-6 sm:px-8 sm:py-8">
-            <div className="mx-auto w-full max-w-4xl">{children}</div>
-          </div>
+        {/* Body */}
+        <div className="p-6">
+          {children}
         </div>
       </div>
     </div>
