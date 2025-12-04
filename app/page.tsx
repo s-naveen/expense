@@ -16,6 +16,8 @@ import { LogOut, Plus, Search, ArrowUpDown, Wallet, TrendingUp, Package, Calenda
 
 type SortOption = 'newest' | 'oldest' | 'amountHigh' | 'amountLow' | 'name';
 
+export const dynamic = 'force-dynamic';
+
 export default function Home() {
   const { user, signOut } = useAuth();
   const [expenses, setExpenses] = useState<Expense[]>([]);

@@ -159,7 +159,7 @@ export default function ExpenseForm({ onSubmit, initialData, onCancel }: Expense
                 type="button"
                 onClick={handleAiCategorize}
                 disabled={!formData.name.trim()}
-                className="p-2 text-gray-400 hover:text-primary transition-colors opacity-0 group-hover:opacity-100 focus:opacity-100"
+                className="p-2 text-primary hover:bg-primary/10 rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-primary/20"
                 title="Auto-categorize"
               >
                 <Sparkles className="h-5 w-5" />
