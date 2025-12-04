@@ -6,6 +6,7 @@ import { Expense, ExpenseCategory } from '@/types/expense';
 import { supabaseStorageService } from '@/lib/supabase-storage';
 import { calculateExpenseSummary, formatCurrency } from '@/lib/utils';
 import StatsCard from '@/components/StatsCard';
+import MobileStatsSummary from '@/components/MobileStatsSummary';
 import ExpenseForm from '@/components/ExpenseForm';
 import ExpenseItem from '@/components/ExpenseItem';
 import CategoryBreakdown from '@/components/CategoryBreakdown';
@@ -13,7 +14,7 @@ import CategoryChips from '@/components/CategoryChips';
 import ThemeToggle from '@/components/ThemeToggle';
 import { useAuth } from '@/lib/hooks/useAuth';
 import Modal from '@/components/Modal';
-import { LogOut, Plus, Search, ArrowUpDown, Wallet, TrendingUp, Package, Calendar } from 'lucide-react';
+import { LogOut, Plus, Search, Wallet, TrendingUp, Package, Calendar } from 'lucide-react';
 
 type SortOption = 'newest' | 'oldest' | 'amountHigh' | 'amountLow' | 'name';
 
@@ -175,31 +176,43 @@ export default function Home() {
         </div>
       </header>
 
-      <main className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
-        {/* Hero Section */}
-        <div className="mb-8 text-center sm:text-left sm:flex sm:items-end sm:justify-between">
-          <div>
-            <h2 className="text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
+      <main className="mx-auto max-w-7xl px-4 py-4 sm:py-6 sm:px-6 lg:px-8">
+        {/* Hero Section - Compact on mobile */}
+        <div className="mb-4 sm:mb-8 sm:flex sm:items-end sm:justify-between">
+          <div className="text-center sm:text-left">
+            <h2 className="text-2xl font-bold tracking-tight text-foreground sm:text-4xl">
               Dashboard
             </h2>
-            <p className="mt-2 text-muted-foreground">
+            {/* Description hidden on mobile */}
+            <p className="mt-1 text-sm text-muted-foreground hidden sm:block sm:text-base sm:mt-2">
               Track your monthly expenses and manage your budget efficiently.
             </p>
           </div>
+          {/* Desktop Add Button */}
           <button
             onClick={() => {
               setEditingExpense(null);
               setIsModalOpen(true);
             }}
-            className="btn-primary mt-4 w-full sm:mt-0 sm:w-auto shadow-lg shadow-primary/25"
+            className="btn-primary hidden sm:inline-flex shadow-lg shadow-primary/25"
           >
             <Plus className="mr-2 h-4 w-4" />
             Add Expense
           </button>
         </div>
 
-        {/* Stats Grid */}
-        <div className="mb-8 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        {/* Mobile: Compact Stats Summary */}
+        <div className="mb-4 sm:hidden">
+          <MobileStatsSummary
+            monthlyExpense={summary.totalMonthlyExpense}
+            totalInvestment={summary.totalInvestment}
+            itemCount={summary.expenseCount}
+            yearlyProjection={summary.totalMonthlyExpense * 12}
+          />
+        </div>
+
+        {/* Desktop: Full Stats Grid */}
+        <div className="mb-8 hidden sm:grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
           <StatsCard
             title="Monthly Expense"
             value={formatCurrency(summary.totalMonthlyExpense)}
@@ -228,7 +241,7 @@ export default function Home() {
         </div>
 
         {/* Mobile: Horizontal Category Chips */}
-        <div className="mb-6 lg:hidden">
+        <div className="mb-4 lg:hidden">
           <CategoryChips
             categoryBreakdown={summary.categoryBreakdown}
             selectedCategory={filterCategory as ExpenseCategory | 'All'}
@@ -343,6 +356,18 @@ export default function Home() {
           onCancel={handleCancelEdit}
         />
       </Modal>
+
+      {/* Mobile Floating Action Button */}
+      <button
+        onClick={() => {
+          setEditingExpense(null);
+          setIsModalOpen(true);
+        }}
+        className="fixed bottom-6 right-6 z-40 sm:hidden flex items-center justify-center w-14 h-14 rounded-full bg-primary text-primary-foreground shadow-xl shadow-primary/30 hover:shadow-primary/50 hover:scale-105 active:scale-95 transition-all duration-200"
+        aria-label="Add Expense"
+      >
+        <Plus className="w-6 h-6" />
+      </button>
     </div>
   );
 }
