@@ -137,7 +137,7 @@ export default function ExpenseForm({ onSubmit, initialData, onCancel }: Expense
           <input
             ref={nameInputRef}
             type="text"
-            className="w-full text-3xl font-bold bg-transparent border-b-2 border-gray-200 dark:border-gray-700 py-2 px-0 focus:outline-none focus:border-primary transition-colors placeholder:text-gray-300 dark:placeholder:text-gray-600"
+            className="w-full text-3xl font-bold bg-transparent border-b-2 border-gray-200 dark:border-gray-700 py-2 px-0 focus:outline-none focus:border-primary transition-colors text-foreground placeholder:text-gray-400 dark:placeholder:text-gray-600"
             placeholder="What did you buy?"
             value={formData.name}
             onChange={(e) => setFormData({ ...formData, name: e.target.value })}
@@ -197,7 +197,7 @@ export default function ExpenseForm({ onSubmit, initialData, onCancel }: Expense
       </div>
 
       {/* Calculator Section */}
-      <div className="bg-gray-50 dark:bg-gray-800/50 rounded-xl p-6 space-y-6">
+      <div className="bg-gray-50 dark:bg-gray-800/40 rounded-xl p-6 space-y-6 border border-gray-100 dark:border-gray-700/50">
         <div className="flex items-center gap-2 text-primary font-medium">
           <Calculator className="h-4 w-4" />
           <span>Cost Calculator</span>
@@ -211,7 +211,7 @@ export default function ExpenseForm({ onSubmit, initialData, onCancel }: Expense
                 <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">₹</span>
                 <input
                   type="number"
-                  className="w-full pl-8 pr-4 py-2 rounded-lg border bg-background focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all font-mono"
+                  className="w-full pl-8 pr-4 py-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all font-mono text-foreground"
                   placeholder="0"
                   min="0"
                   step="0.01"
