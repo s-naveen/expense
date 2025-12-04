@@ -34,7 +34,7 @@ export default function ExpenseItem({ expense, onEdit, onDelete }: ExpenseItemPr
 
           {/* Details */}
           <div className="flex-1 min-w-0">
-            <h3 className="font-semibold text-foreground truncate pr-8 sm:pr-0">
+            <h3 className="font-semibold text-foreground truncate">
               {expense.name}
             </h3>
 
@@ -44,7 +44,7 @@ export default function ExpenseItem({ expense, onEdit, onDelete }: ExpenseItemPr
                 {expense.category}
               </span>
               {expense.subcategory && (
-                <span className="hidden sm:inline-block">• {expense.subcategory}</span>
+                <span className="inline-block">• {expense.subcategory}</span>
               )}
               <span className="flex items-center gap-1">
                 <Calendar className="h-3 w-3" />
@@ -56,7 +56,7 @@ export default function ExpenseItem({ expense, onEdit, onDelete }: ExpenseItemPr
 
         {/* Cost & Actions */}
         <div className="flex items-center justify-between gap-4 sm:justify-end">
-          <div className="text-right">
+          <div className="text-left sm:text-right">
             <p className="text-lg font-bold text-primary">
               {formatCurrency(expense.monthlyCost)}
               <span className="text-xs font-normal text-muted-foreground">/mo</span>
