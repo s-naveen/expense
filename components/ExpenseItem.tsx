@@ -17,9 +17,9 @@ export default function ExpenseItem({ expense, onEdit, onDelete }: ExpenseItemPr
         <div className="flex items-start gap-4">
           {/* Icon/Image */}
           <div className="relative h-12 w-12 flex-shrink-0 overflow-hidden rounded-xl border bg-muted/50 sm:h-14 sm:w-14">
-            {expense.imageUrl ? (
+            {expense.brandLogoUrl || expense.imageUrl ? (
               <Image
-                src={expense.imageUrl}
+                src={expense.brandLogoUrl || expense.imageUrl || ''}
                 alt={expense.name}
                 fill
                 className="object-cover"
