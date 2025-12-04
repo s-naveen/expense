@@ -12,7 +12,7 @@ import CategoryBreakdown from '@/components/CategoryBreakdown';
 import ThemeToggle from '@/components/ThemeToggle';
 import { useAuth } from '@/lib/hooks/useAuth';
 import Modal from '@/components/Modal';
-import { LogOut, Plus, Search, ArrowUpDown } from 'lucide-react';
+import { LogOut, Plus, Search, ArrowUpDown, Wallet, TrendingUp, Package, Calendar } from 'lucide-react';
 
 type SortOption = 'newest' | 'oldest' | 'amountHigh' | 'amountLow' | 'name';
 
@@ -123,111 +123,110 @@ export default function Home() {
   };
 
   return (
-    <div className="min-h-screen py-8 px-4 sm:px-6 lg:px-8">
-      <ThemeToggle />
-      <div className="max-w-7xl mx-auto">
-        {/* User Info Bar */}
-        {user && (
-          <div className="mb-6 flex justify-end items-center gap-4">
-            <div className="flex items-center gap-3 bg-white dark:bg-gray-800 px-4 py-2 rounded-lg shadow-sm">
-              {user.user_metadata?.avatar_url && (
-                <Image
-                  src={user.user_metadata.avatar_url}
-                  alt={user.user_metadata?.name || 'User'}
-                  width={32}
-                  height={32}
-                  className="w-8 h-8 rounded-full"
-                />
-              )}
-              <span className="text-sm text-gray-700 dark:text-gray-300">
-                {user.user_metadata?.name || user.email}
-              </span>
-              <button
-                onClick={signOut}
-                className="text-gray-600 dark:text-gray-400 hover:text-red-600 dark:hover:text-red-400 transition-colors"
-                title="Sign out"
-              >
-                <LogOut className="w-5 h-5" />
-              </button>
+    <div className="min-h-screen pb-20 sm:pb-8">
+      {/* Header Bar */}
+      <header className="sticky top-0 z-30 border-b bg-background/80 backdrop-blur-md">
+        <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
+          <div className="flex items-center gap-2">
+            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
+              <Wallet className="h-5 w-5" />
             </div>
+            <h1 className="text-lg font-bold tracking-tight text-foreground sm:text-xl">
+              ExpenseTracker
+            </h1>
           </div>
-        )}
 
-        {/* Header */}
-        <div className="text-center mb-12">
-          <h1 className="text-5xl font-extrabold text-gray-900 dark:text-gray-100 mb-4 bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-indigo-600 dark:from-blue-400 dark:to-indigo-400">
-            Monthly Expense Tracker
-          </h1>
-          <p className="text-lg text-gray-600 dark:text-gray-300 max-w-2xl mx-auto">
-            Convert your one-time purchases into monthly expenses. Track furniture, electronics, and more with smart amortization.
-          </p>
-          <div className="mt-6 flex justify-center">
-            <button
-              onClick={() => {
-                setEditingExpense(null);
-                setIsModalOpen(true);
-              }}
-              className="inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 px-6 py-3 text-sm font-semibold text-white shadow-lg transition-all duration-200 hover:shadow-xl hover:scale-[1.02]"
-            >
-              <Plus className="h-4 w-4" />
-              Add Expense
-            </button>
+          <div className="flex items-center gap-4">
+            <ThemeToggle />
+            {user && (
+              <div className="flex items-center gap-3">
+                <div className="hidden text-right sm:block">
+                  <p className="text-sm font-medium text-foreground">
+                    {user.user_metadata?.name || 'User'}
+                  </p>
+                  <p className="text-xs text-muted-foreground">{user.email}</p>
+                </div>
+                {user.user_metadata?.avatar_url ? (
+                  <Image
+                    src={user.user_metadata.avatar_url}
+                    alt={user.user_metadata?.name || 'User'}
+                    width={32}
+                    height={32}
+                    className="h-8 w-8 rounded-full ring-2 ring-background"
+                  />
+                ) : (
+                  <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold text-xs ring-2 ring-background">
+                    {user.email?.charAt(0).toUpperCase()}
+                  </div>
+                )}
+                <button
+                  onClick={signOut}
+                  className="rounded-full p-2 text-muted-foreground hover:bg-secondary hover:text-foreground transition-colors"
+                  title="Sign out"
+                >
+                  <LogOut className="h-5 w-5" />
+                </button>
+              </div>
+            )}
           </div>
         </div>
+      </header>
 
-        {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+      <main className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
+        {/* Hero Section */}
+        <div className="mb-8 text-center sm:text-left sm:flex sm:items-end sm:justify-between">
+          <div>
+            <h2 className="text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
+              Dashboard
+            </h2>
+            <p className="mt-2 text-muted-foreground">
+              Track your monthly expenses and manage your budget efficiently.
+            </p>
+          </div>
+          <button
+            onClick={() => {
+              setEditingExpense(null);
+              setIsModalOpen(true);
+            }}
+            className="btn-primary mt-4 w-full sm:mt-0 sm:w-auto shadow-lg shadow-primary/25"
+          >
+            <Plus className="mr-2 h-4 w-4" />
+            Add Expense
+          </button>
+        </div>
+
+        {/* Stats Grid */}
+        <div className="mb-8 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
           <StatsCard
-            title="Total Monthly Expense"
+            title="Monthly Expense"
             value={formatCurrency(summary.totalMonthlyExpense)}
             color="blue"
-            icon={
-              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-            }
+            icon={<Wallet />}
           />
-
           <StatsCard
             title="Total Investment"
             value={formatCurrency(summary.totalInvestment)}
             color="green"
-            icon={
-              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
-              </svg>
-            }
+            icon={<TrendingUp />}
           />
-
           <StatsCard
             title="Total Items"
             value={summary.expenseCount.toString()}
             color="purple"
-            icon={
-              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
-              </svg>
-            }
+            icon={<Package />}
           />
-
           <StatsCard
-            title="Yearly Impact"
+            title="Yearly Projection"
             value={formatCurrency(summary.totalMonthlyExpense * 12)}
             color="orange"
-            subtitle="Annual projection"
-            icon={
-              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-              </svg>
-            }
+            subtitle="Estimated annual cost"
+            icon={<Calendar />}
           />
         </div>
 
-        {/* Main Content Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
-          {/* Left Column - Form & Breakdown */}
+        <div className="grid grid-cols-1 gap-8 lg:grid-cols-3">
+          {/* Left Column - Breakdown */}
           <div className="lg:col-span-1 space-y-6">
-            {/* Category Breakdown */}
             <CategoryBreakdown
               categoryBreakdown={summary.categoryBreakdown}
               totalMonthly={summary.totalMonthlyExpense}
@@ -236,115 +235,101 @@ export default function Home() {
             />
           </div>
 
-          {/* Right Column - Expense List */}
-          <div className="lg:col-span-2">
-            <div className="card p-6">
-              <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between mb-6">
-                <h2 className="text-2xl font-bold text-gray-800 dark:text-gray-100">Your Expenses</h2>
+          {/* Right Column - Expenses List */}
+          <div className="lg:col-span-2 space-y-6">
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+              <h3 className="text-lg font-semibold text-foreground">Recent Expenses</h3>
 
-                <div className="flex flex-col sm:flex-row sm:flex-wrap gap-3 w-full lg:w-auto">
-                  <div className="relative flex-1 min-w-[200px]">
-                    <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
-                    <input
-                      type="text"
-                      placeholder="Search expenses..."
-                      className="input-field text-sm py-2 pl-10 transition-shadow duration-200 focus-visible:shadow-lg"
-                      value={searchTerm}
-                      onChange={(e) => setSearchTerm(e.target.value)}
-                    />
-                  </div>
+              <div className="flex flex-col gap-2 sm:flex-row">
+                <div className="relative">
+                  <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                  <input
+                    type="text"
+                    placeholder="Search..."
+                    className="input-field pl-9 w-full sm:w-[200px]"
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                  />
+                </div>
 
-                  <div className="relative">
-                    <select
-                      className="input-field text-sm py-2 pr-10 transition-shadow duration-200 focus-visible:shadow-lg"
-                      value={filterCategory}
-                      onChange={(e) => setFilterCategory(e.target.value)}
-                    >
-                      {categories.map(category => (
-                        <option key={category} value={category}>{category}</option>
-                      ))}
-                    </select>
-                    <span className="pointer-events-none absolute inset-y-0 right-3 flex items-center text-gray-400">
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="2"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        className="h-4 w-4"
-                      >
-                        <path d="m6 9 6 6 6-6" />
-                      </svg>
-                    </span>
-                  </div>
+                <div className="flex gap-2">
+                  <select
+                    className="input-field w-full sm:w-[140px]"
+                    value={filterCategory}
+                    onChange={(e) => setFilterCategory(e.target.value)}
+                  >
+                    {categories.map(category => (
+                      <option key={category} value={category}>{category}</option>
+                    ))}
+                  </select>
 
-                  <div className="relative">
-                    <select
-                      className="input-field text-sm py-2 pr-10 transition-shadow duration-200 focus-visible:shadow-lg"
-                      value={sortOption}
-                      onChange={(e) => setSortOption(e.target.value as SortOption)}
-                    >
-                      {sortOptions.map(option => (
-                        <option key={option.value} value={option.value}>{option.label}</option>
-                      ))}
-                    </select>
-                    <ArrowUpDown className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
-                  </div>
+                  <select
+                    className="input-field w-full sm:w-[140px]"
+                    value={sortOption}
+                    onChange={(e) => setSortOption(e.target.value as SortOption)}
+                  >
+                    {sortOptions.map(option => (
+                      <option key={option.value} value={option.value}>{option.label}</option>
+                    ))}
+                  </select>
                 </div>
               </div>
-
-              {loading ? (
-                <div className="text-center py-12">
-                  <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600 mx-auto mb-4"></div>
-                  <p className="text-gray-600 dark:text-gray-400">Loading expenses...</p>
-                </div>
-              ) : filteredExpenses.length === 0 ? (
-                <div className="text-center py-12">
-                  <div className="text-6xl mb-4">📊</div>
-                  <h3 className="text-xl font-semibold text-gray-700 dark:text-gray-300 mb-2">No expenses found</h3>
-                  <p className="text-gray-500 dark:text-gray-400">
-                    {expenses.length === 0
-                      ? 'Start tracking your expenses by adding your first item.'
-                      : 'Try adjusting your search or filter criteria.'}
-                  </p>
-                </div>
-              ) : (
-                <div className="space-y-4">
-                  {sortedExpenses.map(expense => (
-                    <ExpenseItem
-                      key={expense.id}
-                      expense={expense}
-                      onEdit={handleEditExpense}
-                      onDelete={handleDeleteExpense}
-                    />
-                  ))}
-                </div>
-              )}
             </div>
+
+            {loading ? (
+              <div className="flex flex-col items-center justify-center py-12">
+                <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent"></div>
+                <p className="mt-4 text-sm text-muted-foreground">Loading your expenses...</p>
+              </div>
+            ) : filteredExpenses.length === 0 ? (
+              <div className="flex flex-col items-center justify-center rounded-xl border border-dashed p-12 text-center">
+                <div className="flex h-12 w-12 items-center justify-center rounded-full bg-muted">
+                  <Package className="h-6 w-6 text-muted-foreground" />
+                </div>
+                <h3 className="mt-4 text-lg font-semibold text-foreground">No expenses found</h3>
+                <p className="mt-2 text-sm text-muted-foreground max-w-sm">
+                  {expenses.length === 0
+                    ? "You haven't added any expenses yet. Start by adding your first item."
+                    : "No expenses match your search criteria. Try adjusting your filters."}
+                </p>
+                {expenses.length === 0 && (
+                  <button
+                    onClick={() => setIsModalOpen(true)}
+                    className="btn-primary mt-6"
+                  >
+                    <Plus className="mr-2 h-4 w-4" />
+                    Add First Expense
+                  </button>
+                )}
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {sortedExpenses.map(expense => (
+                  <ExpenseItem
+                    key={expense.id}
+                    expense={expense}
+                    onEdit={handleEditExpense}
+                    onDelete={handleDeleteExpense}
+                  />
+                ))}
+              </div>
+            )}
           </div>
         </div>
+      </main>
 
-        <Modal
-          open={isModalOpen}
-          onClose={handleCancelEdit}
-          title={editingExpense ? 'Edit Expense' : 'Add New Expense'}
-          description="Categorize purchases and see their monthly impact instantly."
-        >
-          <ExpenseForm
-            onSubmit={handleAddExpense}
-            initialData={editingExpense || undefined}
-            onCancel={handleCancelEdit}
-          />
-        </Modal>
-
-        {/* Footer */}
-        <div className="text-center text-gray-600 dark:text-gray-400 text-sm mt-12">
-          <p>Built with Next.js, React, and Tailwind CSS</p>
-          <p className="mt-1">Track smarter, spend wiser 💰</p>
-        </div>
-      </div>
+      <Modal
+        open={isModalOpen}
+        onClose={handleCancelEdit}
+        title={editingExpense ? 'Edit Expense' : 'Add New Expense'}
+        description="Categorize purchases and see their monthly impact instantly."
+      >
+        <ExpenseForm
+          onSubmit={handleAddExpense}
+          initialData={editingExpense || undefined}
+          onCancel={handleCancelEdit}
+        />
+      </Modal>
     </div>
   );
 }

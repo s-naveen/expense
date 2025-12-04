@@ -5,7 +5,7 @@ import Image from 'next/image';
 import { ExpenseCategory, ExpenseFormData, Expense, CATEGORY_SUBCATEGORIES, EXPENSE_CATEGORIES } from '@/types/expense';
 import { calculateMonthlyCost, formatCurrency, generateAvatarUrl, generateId } from '@/lib/utils';
 import { categorizeExpense } from '@/app/actions/categorize';
-import { Sparkles, Loader2 } from 'lucide-react';
+import { Sparkles, Loader2, Info } from 'lucide-react';
 
 const FALLBACK_PRIMARY_COLOR = '#2563EB';
 const FALLBACK_ACCENT_COLOR = '#7C3AED';
@@ -153,8 +153,8 @@ export default function ExpenseForm({ onSubmit, initialData, onCancel }: Expense
   const hasBrandSelections = Boolean(formData.brandColor || formData.brandAccentColor);
   const brandingGradientStyle = hasBrandSelections
     ? {
-        backgroundImage: `linear-gradient(135deg, ${brandPrimary}, ${brandAccent})`,
-      }
+      backgroundImage: `linear-gradient(135deg, ${brandPrimary}, ${brandAccent})`,
+    }
     : undefined;
   const avatarFallback = generateAvatarUrl(formData.name || 'Expense', formData.category);
   const logoPreview = formData.brandLogoUrl?.trim() || formData.imageUrl?.trim() || avatarFallback;
@@ -162,22 +162,25 @@ export default function ExpenseForm({ onSubmit, initialData, onCancel }: Expense
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
-      <div className="rounded-2xl border border-gray-200/70 dark:border-gray-700/60 bg-white/80 dark:bg-gray-800/80 px-5 py-5 shadow-sm backdrop-blur-sm transition-all duration-200 hover:shadow-xl hover:border-gray-200/40 dark:hover:border-gray-600/60">
+      {/* Name & AI */}
+      <div className="space-y-2">
         <label className="label">Item Name</label>
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
-          <input
-            type="text"
-            className="input-field flex-1"
-            placeholder="e.g., MacBook Pro or AMZN*123456"
-            value={formData.name}
-            onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-            required
-          />
+        <div className="flex gap-2">
+          <div className="relative flex-1">
+            <input
+              type="text"
+              className="input-field pr-10"
+              placeholder="e.g., MacBook Pro"
+              value={formData.name}
+              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+              required
+            />
+          </div>
           <button
             type="button"
             onClick={handleAiCategorize}
             disabled={isAiLoading || !formData.name.trim()}
-            className="inline-flex items-center justify-center gap-2 rounded-xl border border-blue-200/70 bg-gradient-to-r from-blue-500 to-indigo-500 px-4 py-2 text-sm font-semibold text-white shadow-md transition-all duration-200 hover:from-blue-600 hover:to-indigo-600 hover:shadow-lg disabled:cursor-not-allowed disabled:opacity-60"
+            className="btn-primary px-4"
             title="Auto-categorize with AI"
           >
             {isAiLoading ? (
@@ -185,24 +188,20 @@ export default function ExpenseForm({ onSubmit, initialData, onCancel }: Expense
             ) : (
               <Sparkles className="h-4 w-4" />
             )}
-            <span>Smart Fill</span>
+            <span className="sr-only sm:not-sr-only sm:ml-2">Smart Fill</span>
           </button>
         </div>
         {aiSuggestion && (
-          <p
-            className={`mt-2 text-sm ${
-              aiSuggestion.startsWith('Error') || aiSuggestion.startsWith('Failed') || aiSuggestion.startsWith('Please')
-                ? 'text-red-600 dark:text-red-400'
-                : 'text-emerald-600 dark:text-emerald-400'
-            }`}
-          >
+          <p className={`text-xs ${aiSuggestion.startsWith('Error') ? 'text-destructive' : 'text-emerald-600 dark:text-emerald-400'
+            }`}>
             {aiSuggestion}
           </p>
         )}
       </div>
 
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-        <div className="rounded-2xl border border-gray-200/70 dark:border-gray-700/60 bg-white/80 dark:bg-gray-800/80 px-5 py-5 shadow-sm backdrop-blur-sm transition-all duration-200 hover:shadow-xl hover:border-gray-200/40 dark:hover:border-gray-600/60">
+      <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
+        {/* Category */}
+        <div className="space-y-2">
           <label className="label">Category</label>
           <select
             className="input-field"
@@ -216,7 +215,22 @@ export default function ExpenseForm({ onSubmit, initialData, onCancel }: Expense
           </select>
         </div>
 
-        <div className="rounded-2xl border border-gray-200/70 dark:border-gray-700/60 bg-white/80 dark:bg-gray-800/80 px-5 py-5 shadow-sm backdrop-blur-sm transition-all duration-200 hover:shadow-xl hover:border-gray-200/40 dark:hover:border-gray-600/60">
+        {/* Subcategory */}
+        <div className="space-y-2">
+          <label className="label">Subcategory</label>
+          <select
+            className="input-field"
+            value={formData.subcategory}
+            onChange={(e) => setFormData({ ...formData, subcategory: e.target.value })}
+          >
+            {CATEGORY_SUBCATEGORIES[formData.category].map(subcategory => (
+              <option key={subcategory} value={subcategory}>{subcategory}</option>
+            ))}
+          </select>
+        </div>
+
+        {/* Cost */}
+        <div className="space-y-2">
           <label className="label">Total Cost (₹)</label>
           <input
             type="number"
@@ -230,189 +244,128 @@ export default function ExpenseForm({ onSubmit, initialData, onCancel }: Expense
           />
         </div>
 
-        <div className="rounded-2xl border border-gray-200/70 dark:border-gray-700/60 bg-white/80 dark:bg-gray-800/80 px-5 py-5 shadow-sm backdrop-blur-sm transition-all duration-200 hover:shadow-xl hover:border-gray-200/40 dark:hover:border-gray-600/60">
-          <label className="label">Expected Usage (Months)</label>
+        {/* Usage */}
+        <div className="space-y-2">
+          <div className="flex items-center justify-between">
+            <label className="label mb-0">Usage Period</label>
+            <span className="text-xs text-muted-foreground">{formData.usageMonths} months</span>
+          </div>
           <input
-            type="number"
-            className="input-field"
-            placeholder="12"
+            type="range"
             min="1"
-            value={formData.usageMonths || ''}
+            max="60"
+            className="w-full accent-primary"
+            value={formData.usageMonths}
             onChange={(e) => setFormData({ ...formData, usageMonths: parseInt(e.target.value) || 1 })}
-            required
           />
-        </div>
-
-        <div className="rounded-2xl border border-gray-200/70 dark:border-gray-700/60 bg-white/80 dark:bg-gray-800/80 px-5 py-5 shadow-sm backdrop-blur-sm transition-all duration-200 hover:shadow-xl hover:border-gray-200/40 dark:hover:border-gray-600/60 md:col-span-2">
-          <label className="label">Subcategory</label>
-          <select
-            className="input-field"
-            value={formData.subcategory}
-            onChange={(e) => setFormData({ ...formData, subcategory: e.target.value })}
-          >
-            {CATEGORY_SUBCATEGORIES[formData.category].map(subcategory => (
-              <option key={subcategory} value={subcategory}>{subcategory}</option>
-            ))}
-          </select>
+          <div className="flex justify-between text-xs text-muted-foreground">
+            <span>1 mo</span>
+            <span>5 years</span>
+          </div>
         </div>
       </div>
 
-      <div className="rounded-2xl border border-gray-200/70 dark:border-gray-700/60 bg-white/80 dark:bg-gray-800/80 px-5 py-5 shadow-sm backdrop-blur-sm transition-all duration-200 hover:shadow-xl hover:border-gray-200/40 dark:hover:border-gray-600/60">
-        <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-          <div>
-            <label className="label">Brand Identity</label>
-            <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-              Automatically suggested by Smart Fill. Customize if you prefer different branding.
-            </p>
-          </div>
-          <div className="flex items-center gap-3">
+      {/* Brand Identity */}
+      <div className="rounded-xl border bg-card p-4">
+        <div className="flex items-center justify-between mb-4">
+          <h4 className="text-sm font-medium text-foreground">Brand Identity</h4>
+          <div className="flex items-center gap-2">
             <div
-              className={`h-12 w-24 rounded-xl border border-gray-200/70 dark:border-gray-700/60 shadow-sm ${
-                hasBrandSelections ? '' : 'bg-gray-100 dark:bg-gray-800/60'
-              }`}
+              className={`h-8 w-16 rounded-md border shadow-sm ${hasBrandSelections ? '' : 'bg-muted'
+                }`}
               style={brandingGradientStyle}
-              aria-hidden="true"
             />
-            <div className="flex items-center gap-2">
-              <div className="h-12 w-12 overflow-hidden rounded-xl border border-gray-200/70 dark:border-gray-700/60 bg-white/80 dark:bg-gray-900/60 flex items-center justify-center">
-                {logoPreview ? (
-                  <Image
-                    src={logoPreview}
-                    alt={`${brandNameForAlt} logo`}
-                    width={48}
-                    height={48}
-                    className="h-full w-full object-contain"
-                    loader={({ src }) => src}
-                    unoptimized
-                  />
-                ) : (
-                  <span className="text-lg font-semibold text-gray-400 dark:text-gray-500">
-                    {brandNameForAlt.substring(0, 1).toUpperCase()}
-                  </span>
-                )}
-              </div>
+            <div className="h-8 w-8 overflow-hidden rounded-md border bg-background flex items-center justify-center">
+              {logoPreview ? (
+                <Image
+                  src={logoPreview}
+                  alt="Brand logo"
+                  width={32}
+                  height={32}
+                  className="h-full w-full object-contain"
+                  unoptimized
+                />
+              ) : (
+                <span className="text-xs font-bold text-muted-foreground">?</span>
+              )}
             </div>
           </div>
         </div>
 
-        <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-3">
-          <div>
-            <p className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-2">Primary Color</p>
-            <div className="flex items-center gap-3">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+          <div className="space-y-1">
+            <label className="text-xs text-muted-foreground">Primary Color</label>
+            <div className="flex items-center gap-2">
               <input
                 type="color"
-                className="h-12 w-14 cursor-pointer rounded-lg border border-gray-200/70 dark:border-gray-700/60 bg-transparent p-1"
+                className="h-8 w-8 cursor-pointer rounded border-0 p-0"
                 value={brandPrimary}
-                onChange={(e) =>
-                  setFormData(prev => ({
-                    ...prev,
-                    brandColor: e.target.value,
-                  }))
-                }
-                aria-label="Primary brand color"
+                onChange={(e) => setFormData(prev => ({ ...prev, brandColor: e.target.value }))}
               />
-              <span className="text-sm font-medium text-gray-700 dark:text-gray-200">
-                {formData.brandColor ?? 'Default'}
-              </span>
+              <span className="text-xs font-mono text-muted-foreground">{formData.brandColor || 'None'}</span>
             </div>
           </div>
 
-          <div>
-            <p className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-2">Accent Color</p>
-            <div className="flex items-center gap-3">
+          <div className="space-y-1">
+            <label className="text-xs text-muted-foreground">Accent Color</label>
+            <div className="flex items-center gap-2">
               <input
                 type="color"
-                className="h-12 w-14 cursor-pointer rounded-lg border border-gray-200/70 dark:border-gray-700/60 bg-transparent p-1"
+                className="h-8 w-8 cursor-pointer rounded border-0 p-0"
                 value={brandAccent}
-                onChange={(e) =>
-                  setFormData(prev => ({
-                    ...prev,
-                    brandAccentColor: e.target.value,
-                  }))
-                }
-                aria-label="Accent brand color"
+                onChange={(e) => setFormData(prev => ({ ...prev, brandAccentColor: e.target.value }))}
               />
-              <span className="text-sm font-medium text-gray-700 dark:text-gray-200">
-                {formData.brandAccentColor ?? 'Default'}
-              </span>
+              <span className="text-xs font-mono text-muted-foreground">{formData.brandAccentColor || 'None'}</span>
             </div>
           </div>
 
-          <div>
-            <p className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-2">Logo URL</p>
+          <div className="space-y-1">
+            <label className="text-xs text-muted-foreground">Logo URL</label>
             <input
               type="url"
-              className="input-field"
-              placeholder="https://logo.clearbit.com/example.com"
+              className="input-field h-8 text-xs"
+              placeholder="https://..."
               value={formData.brandLogoUrl}
-              onChange={(e) =>
-                setFormData(prev => ({
-                  ...prev,
-                  brandLogoUrl: e.target.value,
-                  imageUrl: e.target.value,
-                }))
-              }
+              onChange={(e) => setFormData(prev => ({ ...prev, brandLogoUrl: e.target.value, imageUrl: e.target.value }))}
             />
-            <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-              Supports secure image URLs (PNG, SVG, JPG). Leave empty if unavailable.
-            </p>
           </div>
         </div>
       </div>
 
-      <div className="rounded-2xl border border-gray-200/70 dark:border-gray-700/60 bg-white/80 dark:bg-gray-800/80 px-5 py-5 shadow-sm backdrop-blur-sm transition-all duration-200 hover:shadow-xl hover:border-gray-200/40 dark:hover:border-gray-600/60">
-        <label className="label">Notes (Optional)</label>
+      {/* Notes */}
+      <div className="space-y-2">
+        <label className="label">Notes</label>
         <textarea
-          className="input-field"
+          className="input-field min-h-[80px] py-2"
           placeholder="Add any additional details..."
-          rows={3}
           value={formData.notes}
           onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
         />
       </div>
 
-      <div className="rounded-2xl border border-blue-200/80 dark:border-blue-800/50 bg-gradient-to-r from-blue-50 via-indigo-50 to-purple-50 dark:from-blue-950/50 dark:via-indigo-900/40 dark:to-purple-900/40 px-6 py-5 shadow-inner">
-        <p className="text-sm font-medium text-blue-700 dark:text-blue-300">Estimated Monthly Cost</p>
-        <p className="mt-2 text-3xl font-semibold text-blue-600 dark:text-blue-200">
-          {formatCurrency(monthlyCost)}
-        </p>
-        <p className="mt-1 text-xs text-blue-500/80 dark:text-blue-300/70">
-          Based on total cost and usage period
-        </p>
+      {/* Summary */}
+      <div className="rounded-xl bg-primary/5 p-4 border border-primary/10">
+        <div className="flex items-center justify-between">
+          <div>
+            <p className="text-sm font-medium text-primary">Estimated Monthly Cost</p>
+            <p className="text-xs text-muted-foreground">Based on {formData.usageMonths} months usage</p>
+          </div>
+          <p className="text-2xl font-bold text-primary">
+            {formatCurrency(monthlyCost)}
+          </p>
+        </div>
       </div>
 
-      <div className="flex flex-col-reverse gap-3 sm:flex-row sm:items-center sm:justify-between">
+      {/* Actions */}
+      <div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
         {onCancel && (
-          <button type="button" onClick={onCancel} className="btn-secondary">
+          <button type="button" onClick={onCancel} className="btn-secondary w-full sm:w-auto">
             Cancel
           </button>
         )}
-        <div className="flex w-full gap-3 sm:w-auto">
-          {initialData && (
-            <button
-              type="button"
-              onClick={() => setFormData({
-                name: '',
-                category: 'Technology & Electronics',
-                subcategory: '',
-                totalCost: 0,
-                usageMonths: 12,
-                brandColor: undefined,
-                brandAccentColor: undefined,
-                brandLogoUrl: '',
-                imageUrl: '',
-                purchaseDate: new Date().toISOString().split('T')[0],
-                notes: '',
-              })}
-              className="btn-secondary w-full sm:w-auto"
-            >
-              Reset
-            </button>
-          )}
-          <button type="submit" className="btn-primary w-full sm:w-auto">
-            {initialData ? 'Update Expense' : 'Add Expense'}
-          </button>
-        </div>
+        <button type="submit" className="btn-primary w-full sm:w-auto">
+          {initialData ? 'Update Expense' : 'Add Expense'}
+        </button>
       </div>
     </form>
   );
