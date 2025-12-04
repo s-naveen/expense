@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from 'react';
 import Image from 'next/image';
 import { ExpenseCategory, ExpenseFormData, Expense, CATEGORY_SUBCATEGORIES, EXPENSE_CATEGORIES } from '@/types/expense';
 import { calculateMonthlyCost, formatCurrency, generateAvatarUrl, generateId } from '@/lib/utils';
-import { categorizeExpense } from '@/app/actions/categorize';
+import { CategorizeResult, CategorizeError } from '@/lib/categorize';
 import { Sparkles, Loader2, ChevronDown, ChevronUp, Palette, Calculator } from 'lucide-react';
 
 const FALLBACK_PRIMARY_COLOR = '#2563EB';
@@ -58,7 +58,13 @@ export default function ExpenseForm({ onSubmit, initialData, onCancel }: Expense
     setAiSuggestion('');
 
     try {
-      const result = await categorizeExpense(formData.name);
+      const response = await fetch('/api/categorize', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: formData.name }),
+      });
+
+      const result: CategorizeResult | CategorizeError = await response.json();
 
       if ('error' in result) {
         setAiSuggestion(`Error: ${result.error}`);
@@ -90,7 +96,7 @@ export default function ExpenseForm({ onSubmit, initialData, onCancel }: Expense
         setAiSuggestion('Auto-categorized!');
       }
     } catch (error) {
-      // Silent fail
+      setAiSuggestion('Failed to categorize');
     } finally {
       setIsAiLoading(false);
       setTimeout(() => setAiSuggestion(''), 3000);
