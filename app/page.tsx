@@ -9,6 +9,7 @@ import StatsCard from '@/components/StatsCard';
 import ExpenseForm from '@/components/ExpenseForm';
 import ExpenseItem from '@/components/ExpenseItem';
 import CategoryBreakdown from '@/components/CategoryBreakdown';
+import CategoryChips from '@/components/CategoryChips';
 import ThemeToggle from '@/components/ThemeToggle';
 import { useAuth } from '@/lib/hooks/useAuth';
 import Modal from '@/components/Modal';
@@ -120,8 +121,8 @@ export default function Home() {
     { value: 'name', label: 'Name A → Z' },
   ];
 
-  const handleCategoryQuickFilter = (category: ExpenseCategory) => {
-    setFilterCategory(prev => (prev === category ? 'All' : category));
+  const handleCategoryQuickFilter = (category: ExpenseCategory | 'All') => {
+    setFilterCategory(category);
   };
 
   return (
@@ -226,9 +227,18 @@ export default function Home() {
           />
         </div>
 
+        {/* Mobile: Horizontal Category Chips */}
+        <div className="mb-6 lg:hidden">
+          <CategoryChips
+            categoryBreakdown={summary.categoryBreakdown}
+            selectedCategory={filterCategory as ExpenseCategory | 'All'}
+            onSelectCategory={handleCategoryQuickFilter}
+          />
+        </div>
+
         <div className="grid grid-cols-1 gap-8 lg:grid-cols-3">
-          {/* Left Column - Breakdown */}
-          <div className="lg:col-span-1 space-y-6">
+          {/* Left Column - Breakdown (Desktop only) */}
+          <div className="hidden lg:block lg:col-span-1 space-y-6">
             <CategoryBreakdown
               categoryBreakdown={summary.categoryBreakdown}
               totalMonthly={summary.totalMonthlyExpense}
@@ -243,7 +253,7 @@ export default function Home() {
               <h3 className="text-lg font-semibold text-foreground">Recent Expenses</h3>
 
               <div className="flex flex-col gap-2 sm:flex-row">
-                <div className="relative">
+                <div className="relative flex-1 sm:flex-initial">
                   <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
                   <input
                     type="text"
@@ -255,8 +265,9 @@ export default function Home() {
                 </div>
 
                 <div className="flex gap-2">
+                  {/* Category dropdown - only on desktop since mobile has chips */}
                   <select
-                    className="input-field w-full sm:w-[140px]"
+                    className="input-field w-full sm:w-[140px] hidden lg:block"
                     value={filterCategory}
                     onChange={(e) => setFilterCategory(e.target.value)}
                   >
@@ -266,7 +277,7 @@ export default function Home() {
                   </select>
 
                   <select
-                    className="input-field w-full sm:w-[140px]"
+                    className="input-field flex-1 sm:w-[140px]"
                     value={sortOption}
                     onChange={(e) => setSortOption(e.target.value as SortOption)}
                   >
