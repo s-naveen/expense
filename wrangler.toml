@@ -1,0 +1,9 @@
+name = "expense-tracker"
+compatibility_date = "2024-12-04"
+compatibility_flags = ["nodejs_compat"]
+pages_build_output_dir = ".vercel/output/static"
+
+[vars]
+# Add your environment variables here or in the Cloudflare Dashboard
+# SUPABASE_URL = "..."
+# SUPABASE_ANON_KEY = "..."
