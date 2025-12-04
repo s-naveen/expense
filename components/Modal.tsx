@@ -58,7 +58,7 @@ export default function Modal({ open, title, description, onClose, children }: M
 
       {/* Modal Content */}
       {/* Mobile: Full-width bottom sheet | Desktop: Centered dialog */}
-      <div className="relative w-full sm:max-w-2xl sm:mx-4 max-h-[95vh] sm:max-h-[90vh] flex flex-col transform bg-white dark:bg-gray-900 shadow-2xl ring-1 ring-black/5 dark:ring-white/10 transition-all rounded-t-2xl sm:rounded-2xl overflow-hidden animate-modal-in">
+      <div className="relative w-full sm:max-w-2xl sm:mx-4 max-h-[95vh] sm:max-h-[90vh] flex flex-col bg-white dark:bg-gray-900 shadow-2xl ring-1 ring-black/5 dark:ring-white/10 rounded-t-2xl sm:rounded-2xl overflow-hidden">
         {/* Sticky Header */}
         <div className="flex-shrink-0 flex items-center justify-between border-b border-gray-100 dark:border-gray-800 px-4 sm:px-6 py-3 sm:py-4 bg-white dark:bg-gray-900">
           {/* Mobile drag indicator */}
