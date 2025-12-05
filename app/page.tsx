@@ -170,9 +170,11 @@ function HomePage() {
           </div>
 
           <div className="flex items-center gap-2 sm:gap-4">
-            {/* Mode Toggle */}
+            {/* Mode Toggle - Desktop only */}
             {user && (
-              <ModeToggle onManageGroups={() => setIsGroupModalOpen(true)} />
+              <div className="hidden sm:block">
+                <ModeToggle onManageGroups={() => setIsGroupModalOpen(true)} />
+              </div>
             )}
 
             <ThemeToggle />
@@ -220,6 +222,28 @@ function HomePage() {
           />
         )}
 
+        {/* Mobile Mode Toggle - Below hero */}
+        {user && (
+          <div className="mb-4 sm:hidden">
+            <div className="flex items-center justify-between rounded-lg border bg-card p-3">
+              <div className="flex items-center gap-2">
+                {mode === 'group' && activeGroup ? (
+                  <>
+                    <Users className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
+                    <span className="text-sm font-medium">{activeGroup.name}</span>
+                  </>
+                ) : (
+                  <>
+                    <Wallet className="h-4 w-4 text-primary" />
+                    <span className="text-sm font-medium">Individual Expenses</span>
+                  </>
+                )}
+              </div>
+              <ModeToggle onManageGroups={() => setIsGroupModalOpen(true)} />
+            </div>
+          </div>
+        )}
+
         {/* Hero Section - Compact on mobile */}
         <div className="mb-4 sm:mb-8 sm:flex sm:items-end sm:justify-between">
           <div className="text-center sm:text-left">
@@ -227,9 +251,9 @@ function HomePage() {
               <h2 className="text-2xl font-bold tracking-tight text-foreground sm:text-4xl">
                 Dashboard
               </h2>
-              {/* Group indicator */}
+              {/* Group indicator - Desktop only */}
               {mode === 'group' && activeGroup && (
-                <span className="flex items-center gap-1.5 rounded-full bg-emerald-500/10 px-2.5 py-1 text-xs font-medium text-emerald-600 dark:text-emerald-400">
+                <span className="hidden sm:flex items-center gap-1.5 rounded-full bg-emerald-500/10 px-2.5 py-1 text-xs font-medium text-emerald-600 dark:text-emerald-400">
                   <Users className="h-3.5 w-3.5" />
                   {activeGroup.name}
                 </span>
