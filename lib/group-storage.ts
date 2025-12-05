@@ -193,17 +193,13 @@ export const groupStorageService = {
                 return null;
             }
 
-            // For now, add as pending - user will be linked when they log in
-            // We use the current user's ID as a fallback (the inviter), 
-            // but set status to pending. RLS will handle access.
-            const { data: currentUser } = await supabase.auth.getUser();
-
+            // Add as pending invite - user_id will be set when they accept
             const { data, error } = await supabase
                 .from('expense_group_members')
                 .insert([
                     {
                         group_id: groupId,
-                        user_id: currentUser?.user?.id, // Use inviter's ID temporarily
+                        // user_id is null until they accept the invite
                         email: email.toLowerCase(),
                         role: 'member',
                         status: 'pending',
