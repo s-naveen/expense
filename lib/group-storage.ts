@@ -303,25 +303,38 @@ export const groupStorageService = {
     getPendingInvitationsWithGroups: async (userEmail: string): Promise<Array<ExpenseGroupMember & { groupName: string }>> => {
         try {
             const supabase = createClient();
-            const { data, error } = await supabase
+
+            // First get the pending invitations
+            const { data: invitations, error: invError } = await supabase
                 .from('expense_group_members')
-                .select(`
-                    *,
-                    expense_groups!inner (
-                        name
-                    )
-                `)
+                .select('*')
                 .eq('email', userEmail.toLowerCase())
                 .eq('status', 'pending');
 
-            if (error) {
-                console.error('Error fetching pending invitations:', error);
+            if (invError || !invitations?.length) {
+                if (invError) console.error('Error fetching pending invitations:', invError);
                 return [];
             }
 
-            return (data || []).map((item: DatabaseExpenseGroupMember & { expense_groups: { name: string } }) => ({
+            // Get unique group IDs
+            const groupIds = [...new Set(invitations.map(i => i.group_id))];
+
+            // Fetch group names (this query bypasses the complex RLS since we're just getting names)
+            const { data: groups, error: groupError } = await supabase
+                .from('expense_groups')
+                .select('id, name')
+                .in('id', groupIds);
+
+            if (groupError) {
+                console.error('Error fetching group names:', groupError);
+            }
+
+            // Create a map of group id to name
+            const groupMap = new Map(groups?.map(g => [g.id, g.name]) || []);
+
+            return invitations.map((item: DatabaseExpenseGroupMember) => ({
                 ...fromDatabaseMember(item),
-                groupName: item.expense_groups?.name || 'Unknown Group',
+                groupName: groupMap.get(item.group_id) || 'Unknown Group',
             }));
         } catch (error) {
             console.error('Error fetching pending invitations:', error);
