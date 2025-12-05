@@ -72,12 +72,18 @@ export function fromDatabaseGroup(db: DatabaseExpenseGroup): ExpenseGroup {
 }
 
 export function toDatabaseGroup(group: Partial<ExpenseGroup>, ownerId: string): Partial<DatabaseExpenseGroup> {
-    return {
-        id: group.id,
+    const result: Partial<DatabaseExpenseGroup> = {
         name: group.name,
         description: group.description || null,
         owner_id: ownerId,
     };
+
+    // Only include id if it exists (for updates, not creates)
+    if (group.id) {
+        result.id = group.id;
+    }
+
+    return result;
 }
 
 export function fromDatabaseMember(db: DatabaseExpenseGroupMember): ExpenseGroupMember {
