@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import Image from 'next/image';
 import { Expense, ExpenseCategory } from '@/types/expense';
 import { supabaseStorageService } from '@/lib/supabase-storage';
@@ -12,51 +12,74 @@ import ExpenseItem from '@/components/ExpenseItem';
 import CategoryBreakdown from '@/components/CategoryBreakdown';
 import CategoryChips from '@/components/CategoryChips';
 import ThemeToggle from '@/components/ThemeToggle';
+import ModeToggle from '@/components/ModeToggle';
+import GroupManagement from '@/components/GroupManagement';
+import PendingInvitations from '@/components/PendingInvitations';
 import { useAuth } from '@/lib/hooks/useAuth';
+import { ExpenseModeProvider, useExpenseMode } from '@/lib/hooks/useExpenseMode';
 import Modal from '@/components/Modal';
-import { LogOut, Plus, Search, Wallet, TrendingUp, Package, Calendar } from 'lucide-react';
+import { LogOut, Plus, Search, Wallet, TrendingUp, Package, Calendar, Users } from 'lucide-react';
 
 type SortOption = 'newest' | 'oldest' | 'amountHigh' | 'amountLow' | 'name';
 
 export const dynamic = 'force-dynamic';
 
-export default function Home() {
+// Inner component that uses the expense mode context
+function HomePage() {
   const { user, signOut } = useAuth();
+  const { mode, activeGroup, loading: modeLoading, refreshGroups } = useExpenseMode();
+
   const [expenses, setExpenses] = useState<Expense[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isGroupModalOpen, setIsGroupModalOpen] = useState(false);
   const [editingExpense, setEditingExpense] = useState<Expense | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterCategory, setFilterCategory] = useState<string>('All');
   const [sortOption, setSortOption] = useState<SortOption>('newest');
   const [loading, setLoading] = useState(true);
 
-  // Load expenses from Supabase on mount
+  // Load expenses based on current mode
+  const loadExpenses = useCallback(async () => {
+    if (!user) return;
+
+    setLoading(true);
+    let loadedExpenses: Expense[];
+
+    if (mode === 'group' && activeGroup) {
+      loadedExpenses = await supabaseStorageService.getGroupExpenses(activeGroup.id);
+    } else {
+      loadedExpenses = await supabaseStorageService.getExpenses(user.id);
+    }
+
+    setExpenses(loadedExpenses);
+    setLoading(false);
+  }, [user, mode, activeGroup]);
+
+  // Load expenses when mode or active group changes
   useEffect(() => {
-    const loadExpenses = async () => {
-      if (!user) return;
-
-      setLoading(true);
-      const loadedExpenses = await supabaseStorageService.getExpenses(user.id);
-      setExpenses(loadedExpenses);
-      setLoading(false);
-    };
-
-    if (user) {
+    if (!modeLoading && user) {
       loadExpenses();
     }
-  }, [user]);
+  }, [modeLoading, user, mode, activeGroup, loadExpenses]);
 
   const handleAddExpense = async (expense: Expense) => {
     if (!user) return;
 
+    const groupId = mode === 'group' && activeGroup ? activeGroup.id : undefined;
+
     if (editingExpense) {
-      const updated = await supabaseStorageService.updateExpense(user.id, expense.id, expense);
+      const updated = await supabaseStorageService.updateExpense(
+        user.id,
+        expense.id,
+        expense,
+        groupId
+      );
       if (updated) {
         setExpenses(expenses.map(exp => exp.id === expense.id ? updated : exp));
         setEditingExpense(null);
       }
     } else {
-      const added = await supabaseStorageService.addExpense(user.id, expense);
+      const added = await supabaseStorageService.addExpense(user.id, expense, groupId);
       if (added) {
         setExpenses([added, ...expenses]);
       }
@@ -74,7 +97,8 @@ export default function Home() {
     if (!user) return;
 
     if (confirm('Are you sure you want to delete this expense?')) {
-      const deleted = await supabaseStorageService.deleteExpense(user.id, id);
+      const groupId = mode === 'group' && activeGroup ? activeGroup.id : undefined;
+      const deleted = await supabaseStorageService.deleteExpense(user.id, id, groupId);
       if (deleted) {
         setExpenses(expenses.filter(exp => exp.id !== id));
       }
@@ -84,6 +108,11 @@ export default function Home() {
   const handleCancelEdit = () => {
     setEditingExpense(null);
     setIsModalOpen(false);
+  };
+
+  const handleGroupModalClose = () => {
+    setIsGroupModalOpen(false);
+    refreshGroups();
   };
 
   const summary = calculateExpenseSummary(expenses);
@@ -140,10 +169,15 @@ export default function Home() {
             </h1>
           </div>
 
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2 sm:gap-4">
+            {/* Mode Toggle */}
+            {user && (
+              <ModeToggle onManageGroups={() => setIsGroupModalOpen(true)} />
+            )}
+
             <ThemeToggle />
             {user && (
-              <div className="flex items-center gap-3">
+              <div className="flex items-center gap-2 sm:gap-3">
                 <div className="hidden text-right sm:block">
                   <p className="text-sm font-medium text-foreground">
                     {user.user_metadata?.name || 'User'}
@@ -177,15 +211,35 @@ export default function Home() {
       </header>
 
       <main className="mx-auto max-w-7xl px-4 py-4 sm:py-6 sm:px-6 lg:px-8">
+        {/* Pending Invitations Banner */}
+        {user?.email && (
+          <PendingInvitations
+            userEmail={user.email}
+            userId={user.id}
+            onAccept={refreshGroups}
+          />
+        )}
+
         {/* Hero Section - Compact on mobile */}
         <div className="mb-4 sm:mb-8 sm:flex sm:items-end sm:justify-between">
           <div className="text-center sm:text-left">
-            <h2 className="text-2xl font-bold tracking-tight text-foreground sm:text-4xl">
-              Dashboard
-            </h2>
+            <div className="flex items-center justify-center sm:justify-start gap-2">
+              <h2 className="text-2xl font-bold tracking-tight text-foreground sm:text-4xl">
+                Dashboard
+              </h2>
+              {/* Group indicator */}
+              {mode === 'group' && activeGroup && (
+                <span className="flex items-center gap-1.5 rounded-full bg-emerald-500/10 px-2.5 py-1 text-xs font-medium text-emerald-600 dark:text-emerald-400">
+                  <Users className="h-3.5 w-3.5" />
+                  {activeGroup.name}
+                </span>
+              )}
+            </div>
             {/* Description hidden on mobile */}
             <p className="mt-1 text-sm text-muted-foreground hidden sm:block sm:text-base sm:mt-2">
-              Track your monthly expenses and manage your budget efficiently.
+              {mode === 'group' && activeGroup
+                ? `Shared expenses for ${activeGroup.name}`
+                : 'Track your monthly expenses and manage your budget efficiently.'}
             </p>
           </div>
           {/* Desktop Add Button */}
@@ -302,7 +356,7 @@ export default function Home() {
               </div>
             </div>
 
-            {loading ? (
+            {loading || modeLoading ? (
               <div className="flex flex-col items-center justify-center py-12">
                 <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent"></div>
                 <p className="mt-4 text-sm text-muted-foreground">Loading your expenses...</p>
@@ -315,7 +369,9 @@ export default function Home() {
                 <h3 className="mt-4 text-lg font-semibold text-foreground">No expenses found</h3>
                 <p className="mt-2 text-sm text-muted-foreground max-w-sm">
                   {expenses.length === 0
-                    ? "You haven't added any expenses yet. Start by adding your first item."
+                    ? mode === 'group' && activeGroup
+                      ? `No expenses in ${activeGroup.name} yet. Start by adding your first shared expense.`
+                      : "You haven't added any expenses yet. Start by adding your first item."
                     : "No expenses match your search criteria. Try adjusting your filters."}
                 </p>
                 {expenses.length === 0 && (
@@ -344,6 +400,7 @@ export default function Home() {
         </div>
       </main>
 
+      {/* Expense Modal */}
       <Modal
         open={isModalOpen}
         onClose={handleCancelEdit}
@@ -357,6 +414,15 @@ export default function Home() {
         />
       </Modal>
 
+      {/* Group Management Modal */}
+      {user && (
+        <GroupManagement
+          open={isGroupModalOpen}
+          onClose={handleGroupModalClose}
+          userId={user.id}
+        />
+      )}
+
       {/* Mobile Floating Action Button */}
       <button
         onClick={() => {
@@ -369,5 +435,24 @@ export default function Home() {
         <Plus className="w-6 h-6" />
       </button>
     </div>
+  );
+}
+
+// Main export wraps with ExpenseModeProvider
+export default function Home() {
+  const { user, loading } = useAuth();
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent"></div>
+      </div>
+    );
+  }
+
+  return (
+    <ExpenseModeProvider userId={user?.id || null}>
+      <HomePage />
+    </ExpenseModeProvider>
   );
 }

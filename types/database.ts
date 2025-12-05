@@ -4,6 +4,7 @@ import { Expense } from './expense';
 export interface DatabaseExpense {
   id: string;
   user_id: string;
+  group_id?: string | null;
   name: string;
   category: string;
   subcategory?: string | null;
@@ -21,10 +22,11 @@ export interface DatabaseExpense {
 }
 
 // Helper functions to convert between database and application types
-export function toDatabaseExpense(expense: Expense, userId: string): Partial<DatabaseExpense> {
+export function toDatabaseExpense(expense: Expense, userId: string, groupId?: string): Partial<DatabaseExpense> {
   return {
     id: expense.id,
     user_id: userId,
+    group_id: groupId || expense.groupId || null,
     name: expense.name,
     category: expense.category,
     subcategory: expense.subcategory || null,
@@ -57,6 +59,7 @@ export function fromDatabaseExpense(dbExpense: DatabaseExpense): Expense {
     imageUrl: dbExpense.image_url || undefined,
     purchaseDate: dbExpense.purchase_date,
     notes: dbExpense.notes || undefined,
+    groupId: dbExpense.group_id || undefined,
     createdAt: dbExpense.created_at,
     updatedAt: dbExpense.updated_at,
   };

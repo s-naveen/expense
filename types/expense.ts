@@ -194,6 +194,7 @@ export interface Expense {
   imageUrl?: string;
   purchaseDate: string;
   notes?: string;
+  groupId?: string;
   createdAt: string;
   updatedAt: string;
 }
@@ -210,6 +211,7 @@ export interface ExpenseFormData {
   imageUrl?: string;
   purchaseDate: string;
   notes?: string;
+  groupId?: string;
 }
 
 export interface ExpenseSummary {
