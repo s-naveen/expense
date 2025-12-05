@@ -299,7 +299,37 @@ export const groupStorageService = {
         }
     },
 
-    // Get pending invitations for current user
+    // Get pending invitations for current user with group details
+    getPendingInvitationsWithGroups: async (userEmail: string): Promise<Array<ExpenseGroupMember & { groupName: string }>> => {
+        try {
+            const supabase = createClient();
+            const { data, error } = await supabase
+                .from('expense_group_members')
+                .select(`
+                    *,
+                    expense_groups!inner (
+                        name
+                    )
+                `)
+                .eq('email', userEmail.toLowerCase())
+                .eq('status', 'pending');
+
+            if (error) {
+                console.error('Error fetching pending invitations:', error);
+                return [];
+            }
+
+            return (data || []).map((item: DatabaseExpenseGroupMember & { expense_groups: { name: string } }) => ({
+                ...fromDatabaseMember(item),
+                groupName: item.expense_groups?.name || 'Unknown Group',
+            }));
+        } catch (error) {
+            console.error('Error fetching pending invitations:', error);
+            return [];
+        }
+    },
+
+    // Get pending invitations for current user (legacy)
     getPendingInvitations: async (userEmail: string): Promise<ExpenseGroupMember[]> => {
         try {
             const supabase = createClient();
