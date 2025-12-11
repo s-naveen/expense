@@ -155,7 +155,7 @@ Respond ONLY with a JSON object in this exact format (no markdown, no extra text
             contents: prompt,
             config: {
                 thinkingConfig: {
-                    thinkingBudget: 0,
+                    thinkingBudget: 128,
                 },
             },
         });
