@@ -151,8 +151,13 @@ Respond ONLY with a JSON object in this exact format (no markdown, no extra text
 {"cleanedName": "cleaned name here", "suggestedCategory": "category here", "suggestedSubcategory": "subcategory here", "brandColor": "#123456", "brandAccentColor": "#654321", "brandLogoUrl": "https://logo.clearbit.com/example.com", "imageKeyword": "keyword here", "imageUrl": "https://images.unsplash.com/photo-id", "confidence": "high"}`;
 
         const response = await ai.models.generateContent({
-            model: 'gemini-3-pro-preview',
+            model: 'gemini-flash-latest',
             contents: prompt,
+            config: {
+                thinkingConfig: {
+                    thinkingBudget: 0,
+                },
+            },
         });
 
         const responseText = response.text?.trim();
